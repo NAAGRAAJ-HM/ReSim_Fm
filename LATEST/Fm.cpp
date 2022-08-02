@@ -1,10 +1,16 @@
 #include "Std_Types.hpp"
 
 static uint8 Ascii2Hex(uint8 c){
-        if(c >= '0' && c <= '9'){return (uint8)(c - '0');}
-   else if(c >= 'A' && c <= 'F'){return (uint8)(c - 'A' + 10);}
-   else if(c >= 'a' && c <= 'f'){return (uint8)(c - 'a' + 10);}
-   else                         {return 0;}
+        if(c>='0'&&c<='9'){return(uint8)(c-'0');}
+   else if(c>='A'&&c<='F'){return(uint8)(c-'A'+10);}
+   else if(c>='a'&&c<='f'){return(uint8)(c-'a'+10);}
+   else                   {return 0;}
+}
+
+static uint8 Hex2Ascii(uint8 h){
+        if(       h<= 9){return (uint8)(h+'0');}
+   else if(h>=10&&h<=15){return (uint8)(h+'A'-10);}
+   else                 {return '?';}
 }
 
 #include <stdio.h>
@@ -26,15 +32,22 @@ static uint8 GetNibble(void){
    return chRead;
 }
 
+uint8 u8CheckSum;
 static uint8 GetByte(void){
-   uint8  u8Byte  = (Ascii2Hex(GetNibble()));
-          u8Byte  = (u8Byte << 4) & 0xF0;
-          u8Byte |= Ascii2Hex(GetNibble());
+   uint8  u8Byte      = (Ascii2Hex(GetNibble()));
+          u8Byte      = (u8Byte << 4) & 0xF0;
+          u8Byte     |= Ascii2Hex(GetNibble());
+          u8CheckSum += u8Byte;
    return u8Byte;
 }
 
-#include "Fm.hpp"
+static void PutByte(uint8 u8Byte){
+   u8CheckSum += u8Byte;
+   fputc(Hex2Ascii(0x0F&(u8Byte>>4)),file);
+   fputc(Hex2Ascii(0x0F&(u8Byte   )),file);
+}
 
+#include "Fm.hpp"
 void Fm::Read(
    uint8* au8Buffer
 ){
@@ -44,15 +57,11 @@ void Fm::Read(
       do{
          chRead = fgetc(file);
          if(':' == chRead){
+                  u8CheckSum   = 0;
             uint8 u8CountData  = GetByte();
-            uint8 u8CheckSum   = u8CountData;
             uint8 u8AddressMSB = GetByte();
-                  u8CheckSum  += u8AddressMSB;
             uint8 u8AddressLSB = GetByte();
-                  u8CheckSum  += u8AddressLSB;
             uint8 u8TypeRecord = GetByte();
-                  u8CheckSum  += u8TypeRecord;
-   
             if(
                   (0 != u8CountData)
                && (0 == u8TypeRecord)
@@ -65,20 +74,59 @@ void Fm::Read(
                          u32IndexData ++
                ){
                   uint8 u8ByteRead = GetByte();
-                  au8Buffer[u16Address + u32IndexData] = u8ByteRead;
-                  u8CheckSum  += u8ByteRead;
+                  au8Buffer[u16Address+u32IndexData] = u8ByteRead;
                   printf(" %2.2X", u8ByteRead);
                }
-               if(u8CheckSum != GetByte()){
+               uint8 u8CheckSumStored = GetByte();
+               if(0 != u8CheckSum){
                   printf("\nChecksum is corrupt!");
+                  printf("\nCalculated Checksum: 0x%2.2X", u8CheckSum);
+                  printf("\nStored Checksum:     0x%2.2X", u8CheckSumStored);
                }
             }
          }
       }while(EOF != chRead);
    }
    else{
-      printf("Unable to open file");
+      printf("\nUnable to open file");
    }
    printf("\n");
    fclose(file);
 }
+
+void Fm::Write(
+      uint16 u16Size
+   ,  uint8* au8Buffer
+){
+   file = fopen("Output.hex", "wb");
+   if(NULL != file){
+      for(
+         uint16 u16Address  = 0;
+                u16Address  < u16Size;
+                u16Address += 0x10
+      ){
+         fputc('\n', file);
+         fputc(':', file);
+         u8CheckSum = 0;
+         PutByte(0x10);
+         PutByte(0xFF&(u16Address>>8));
+         PutByte(0xFF&(u16Address   ));
+         PutByte(0x00);
+         for(
+            uint32 u32IndexData = 0;
+                   u32IndexData < 0x10;
+                   u32IndexData ++
+         ){
+            PutByte(au8Buffer[u16Address+u32IndexData]);
+         }
+         PutByte(0-u8CheckSum);
+      }
+      fputc('\n', file);
+      fputc(EOF, file);
+   }
+   else{
+      printf("\nUnable to open file");
+   }
+   fclose(file);
+}
+
