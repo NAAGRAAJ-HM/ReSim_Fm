@@ -130,3 +130,40 @@ void ReSimFm::Write(
    fclose(file);
 }
 
+void ReSimFm::CsvReadOut(void){
+   FILE* ptrDataSet = fopen("DataSet.csv", "r");
+   if(NULL == ptrDataSet){
+      printf("\nFile opening failed");
+   }
+   else{
+      printf("\nFile opened");
+      int version;
+      int DataLength;
+      int RecordLength;
+      char c;
+      fscanf(ptrDataSet, "%d%c%d%c%d%c", &version, &c, &DataLength, &c, &RecordLength, &c);
+      printf("\nversion: %d\nDataLen: %d\nRecordLength: %d", version, DataLength, RecordLength);
+
+      int DataCount;
+      for(
+         DataCount = 0;
+         DataCount < DataLength;
+         DataCount++
+      ){
+         printf("\nRecord[%2.2d]: ", DataCount);
+         int Record[8/*RecordLen*/];
+         int RecordCount;
+         for(
+            RecordCount = 0;
+            RecordCount < RecordLength;
+            RecordCount++
+         ){
+            fscanf(ptrDataSet, "%d%c", &Record[RecordCount], &c);
+            printf(" 0x%8.8X", Record[RecordCount]);
+         }
+      }
+
+      fclose(ptrDataSet);
+      printf("\nFile closed\n");
+   }
+}

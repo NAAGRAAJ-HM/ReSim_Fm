@@ -1,6 +1,6 @@
 #pragma once
 /******************************************************************************/
-/* File   : ReSimFm.hpp                                                            */
+/* File   : ReSimFm.hpp                                                       */
 /* Author : NAGARAJA HM (c) since 1982. All rights reserved.                  */
 /******************************************************************************/
 
@@ -23,6 +23,7 @@ class ReSimFm{
    public:
       void Read(uint8* au8Buffer);
       void Write(uint16 u16Size, uint8* au8Buffer);
+      void CsvReadOut(void);
 };
 
 /******************************************************************************/
