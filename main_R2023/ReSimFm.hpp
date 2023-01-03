@@ -21,9 +21,11 @@
 /******************************************************************************/
 class ReSimFm{
    public:
-      void Read(uint8* au8Buffer);
-      void Write(uint16 u16Size, uint8* au8Buffer);
-      void CsvReadOut(void);
+      void InitFunction   (void);
+      void DeInitFunction (void);
+      void MainFunction   (void);
+      void Read           (uint8* au8Buffer);
+      void Write          (uint16 u16Size, uint8* au8Buffer);
 };
 
 /******************************************************************************/
@@ -37,6 +39,7 @@ class ReSimFm{
 /******************************************************************************/
 /* OBJECTS                                                                    */
 /******************************************************************************/
+extern ReSimFm ReSim;
 
 /******************************************************************************/
 /* FUNCTIONS                                                                  */

@@ -48,6 +48,101 @@ static void PutByte(uint8 u8Byte){
 }
 
 #include "ReSimFm.hpp"
+//TBD: Centralize the simulation techniques to this module
+/*
+   uint8 au8Data[32768];
+   ReSim.Read(        au8Data);
+   ReSim.Write(32768, au8Data);
+*/
+
+typedef struct{
+   int version;
+   int NumSamples;
+   int LenSample;
+}stHeaderLogInput;
+
+typedef struct{
+   FILE*            fptr;
+   stHeaderLogInput Header;
+   int              IndexSample;
+}stMetaData;
+
+ReSimFm    ReSim;
+stMetaData MetaDataLogInput;
+
+void Debug_Here(void){
+   printf("\nCode reached till here!\n");
+   while(1);
+}
+
+void ReSimFm::InitFunction(void){
+   MetaDataLogInput.fptr = fopen("Log_Input.csv", "r");
+   if(NULL == MetaDataLogInput.fptr){
+      printf("\nFile opening failed");
+   }
+   else{
+      printf("\nFile opened");
+
+      char char_dummy;
+      fscanf(
+            MetaDataLogInput.fptr
+         ,  "%d%c%d%c%d%c"
+         ,  &MetaDataLogInput.Header.version
+         ,  &char_dummy
+         ,  &MetaDataLogInput.Header.NumSamples
+         ,  &char_dummy
+         ,  &MetaDataLogInput.Header.LenSample
+         ,  &char_dummy
+      );
+
+      printf(
+            "\nversion: %d\nNumSamples: %d\nLenSample: %d"
+         ,  MetaDataLogInput.Header.version
+         ,  MetaDataLogInput.Header.NumSamples
+         ,  MetaDataLogInput.Header.LenSample
+      );
+      MetaDataLogInput.IndexSample = 0;
+   }
+}
+
+void ReSimFm::DeInitFunction(void){
+   fclose(MetaDataLogInput.fptr);
+   printf("\nFile closed\n");
+}
+
+void ReSimFm::MainFunction(void){
+   if(
+         MetaDataLogInput.Header.NumSamples
+      >  MetaDataLogInput.IndexSample
+   ){
+      printf("\nRecord[%2.2d]: ", MetaDataLogInput.IndexSample);
+      int WordsSample[8/*LenSample*/];
+      int IndexWord;
+      for(
+         IndexWord = 0;
+         IndexWord < MetaDataLogInput.Header.LenSample;
+         IndexWord++
+      ){
+         char char_dummy;
+         fscanf(
+               MetaDataLogInput.fptr
+            ,  "%d%c"
+            ,  &WordsSample[IndexWord]
+            ,  &char_dummy
+         );
+
+         printf(
+               " 0x%8.8X"
+            ,  WordsSample[IndexWord]
+         );
+      }
+      MetaDataLogInput.IndexSample++;
+   }
+   else{
+      DeInitFunction(); //TBD: Initial shutdown here
+   }
+}
+
 void ReSimFm::Read(
    uint8* au8Buffer
 ){
@@ -128,42 +223,4 @@ void ReSimFm::Write(
       printf("\nUnable to open file");
    }
    fclose(file);
-}
-
-void ReSimFm::CsvReadOut(void){
-   FILE* ptrDataSet = fopen("DataSet.csv", "r");
-   if(NULL == ptrDataSet){
-      printf("\nFile opening failed");
-   }
-   else{
-      printf("\nFile opened");
-      int version;
-      int DataLength;
-      int RecordLength;
-      char c;
-      fscanf(ptrDataSet, "%d%c%d%c%d%c", &version, &c, &DataLength, &c, &RecordLength, &c);
-      printf("\nversion: %d\nDataLen: %d\nRecordLength: %d", version, DataLength, RecordLength);
-
-      int DataCount;
-      for(
-         DataCount = 0;
-         DataCount < DataLength;
-         DataCount++
-      ){
-         printf("\nRecord[%2.2d]: ", DataCount);
-         int Record[8/*RecordLen*/];
-         int RecordCount;
-         for(
-            RecordCount = 0;
-            RecordCount < RecordLength;
-            RecordCount++
-         ){
-            fscanf(ptrDataSet, "%d%c", &Record[RecordCount], &c);
-            printf(" 0x%8.8X", Record[RecordCount]);
-         }
-      }
-
-      fclose(ptrDataSet);
-      printf("\nFile closed\n");
-   }
 }
