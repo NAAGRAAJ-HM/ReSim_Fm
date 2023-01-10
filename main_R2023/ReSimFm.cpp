@@ -70,18 +70,31 @@ typedef struct{
 ReSimFm    ReSim;
 stMetaData MetaDataLogInput;
 
-void Debug_Here(void){
-   printf("\nCode reached till here!\n");
-   while(1);
+#include "DebugHere.hpp"
+void DebugHere(
+      uint8  lu8Path
+   ,  uint8  lu8Strategy
+   ,  int    ls32Value
+){
+   static sint16 ls16Count = 1;
+   printf("Instance[%3.3d] Path[%3.3d]: Value = %d, code reached till here. ", ls16Count, lu8Path, ls32Value);
+   if(DebugHere_Halt == lu8Strategy){
+      printf("Debug strategy = HALT\n");
+      while(1);
+   }
+   else{
+      printf("Debug strategy = PROCEED\n");
+      ls16Count++;
+   }
 }
 
 void ReSimFm::InitFunction(void){
    MetaDataLogInput.fptr = fopen("Log_Input.csv", "r");
    if(NULL == MetaDataLogInput.fptr){
-      printf("\nFile opening failed");
+      printf("File opening failed\n");
    }
    else{
-      printf("\nFile opened");
+      printf("File opened\n");
 
       char char_dummy;
       fscanf(
@@ -96,7 +109,7 @@ void ReSimFm::InitFunction(void){
       );
 
       printf(
-            "\nversion: %d\nNumSamples: %d\nLenSample: %d"
+            "version: %d NumSamples: %d LenSample: %d\n"
          ,  MetaDataLogInput.Header.version
          ,  MetaDataLogInput.Header.NumSamples
          ,  MetaDataLogInput.Header.LenSample
@@ -107,7 +120,7 @@ void ReSimFm::InitFunction(void){
 
 void ReSimFm::DeInitFunction(void){
    fclose(MetaDataLogInput.fptr);
-   printf("\nFile closed\n");
+   printf("File closed\n");
 }
 
 void ReSimFm::MainFunction(void){
@@ -115,7 +128,7 @@ void ReSimFm::MainFunction(void){
          MetaDataLogInput.Header.NumSamples
       >  MetaDataLogInput.IndexSample
    ){
-      printf("\nRecord[%2.2d]: ", MetaDataLogInput.IndexSample);
+      printf("Record[%2.2d]: ", MetaDataLogInput.IndexSample);
       int WordsSample[8/*LenSample*/];
       int IndexWord;
       for(
@@ -136,10 +149,11 @@ void ReSimFm::MainFunction(void){
             ,  WordsSample[IndexWord]
          );
       }
+      printf("\n");
       MetaDataLogInput.IndexSample++;
    }
    else{
-      DeInitFunction(); //TBD: Initial shutdown here
+      DeInitFunction(); //TBD: Initiate shutdown here
    }
 }
 
