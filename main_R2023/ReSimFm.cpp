@@ -1,5 +1,8 @@
 #include "Std_Types.hpp"
 
+/******************************************************************************/
+//TBD: Duplicated code, make library
+/******************************************************************************/
 static uint8 Ascii2Hex(uint8 c){
         if(c>='0'&&c<='9'){return(uint8)(c-'0');}
    else if(c>='A'&&c<='F'){return(uint8)(c-'A'+10);}
@@ -7,6 +10,9 @@ static uint8 Ascii2Hex(uint8 c){
    else                   {return 0;}
 }
 
+/******************************************************************************/
+//TBD: Duplicated code, make library
+/******************************************************************************/
 static uint8 Hex2Ascii(uint8 h){
         if(       h<= 9){return (uint8)(h+'0');}
    else if(h>=10&&h<=15){return (uint8)(h+'A'-10);}
@@ -18,6 +24,9 @@ static uint8 Hex2Ascii(uint8 h){
 
 FILE* file = NULL;
 
+/******************************************************************************/
+//TBD: Duplicated code, make library
+/******************************************************************************/
 static uint8 GetNibble(void){
    uint8 chRead;
 
@@ -33,6 +42,9 @@ static uint8 GetNibble(void){
 }
 
 uint8 u8CheckSum;
+/******************************************************************************/
+//TBD: Duplicated code, make library
+/******************************************************************************/
 static uint8 GetByte(void){
    uint8  u8Byte      = (Ascii2Hex(GetNibble()));
           u8Byte      = (u8Byte << 4) & 0xF0;
@@ -41,6 +53,9 @@ static uint8 GetByte(void){
    return u8Byte;
 }
 
+/******************************************************************************/
+//TBD: Duplicated code, make library
+/******************************************************************************/
 static void PutByte(uint8 u8Byte){
    u8CheckSum += u8Byte;
    fputc(Hex2Ascii(0x0F&(u8Byte>>4)),file);
